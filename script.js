@@ -137,10 +137,26 @@ document.addEventListener("DOMContentLoaded", function () {
 
       //all i want to do now and here is combine usa with zaf to have the overlapping worst
       // requirement
-
+      let combinedVisaReqs = {};
       for (let countryCode in countriesObject.USA) {
-        // console.log(countryCode, countriesObject.USA[countryCode]);
+        //could change countriesObject.USA to a generic complete list
+        console.log(
+          countriesObject.USA[countryCode],
+          countriesObject.ZAF[countryCode],
+          sortedVisaRequirements.indexOf(countriesObject.USA[countryCode]),
+          sortedVisaRequirements.indexOf(countriesObject.ZAF[countryCode])
+        );
+        if (
+          sortedVisaRequirements.indexOf(countriesObject.USA[countryCode]) <=
+          sortedVisaRequirements.indexOf(countriesObject.ZAF[countryCode])
+        ) {
+          combinedVisaReqs[countryCode] = countriesObject.USA[countryCode];
+        } else {
+          combinedVisaReqs[countryCode] = countriesObject.ZAF[countryCode];
+        }
       }
+
+      console.log(combinedVisaReqs);
 
       console.log(data);
       // Use D3's built-in color scale
