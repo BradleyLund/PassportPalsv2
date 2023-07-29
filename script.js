@@ -100,9 +100,48 @@ document.addEventListener("DOMContentLoaded", function () {
 
         // console.log(countriesObject);
       }
-      console.log(visaRequirementPossibilities);
-      console.log(countryCodes);
+      // console.log(countryCodes);
+
+      // I could literally save this in a new json file and just import it going forwards
       console.log(countriesObject);
+
+      visaRequirementPossibilities.sort();
+      console.log(visaRequirementPossibilities);
+
+      let sortedVisaRequirements = [
+        "-1",
+        null,
+        "no admission",
+        "covid ban",
+        "visa required",
+        "e-visa",
+        "visa on arrival",
+        "7",
+        "10",
+        "14",
+        "15",
+        "21",
+        "28",
+        "30",
+        "31",
+        "42",
+        "45",
+        "60",
+        "90",
+        "120",
+        "180",
+        "240",
+        "360",
+        "visa free",
+      ];
+
+      //all i want to do now and here is combine usa with zaf to have the overlapping worst
+      // requirement
+
+      for (let countryCode in countriesObject.USA) {
+        // console.log(countryCode, countriesObject.USA[countryCode]);
+      }
+
       console.log(data);
       // Use D3's built-in color scale
       var colorScale = d3
