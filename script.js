@@ -222,7 +222,7 @@ document.addEventListener("DOMContentLoaded", function () {
         ]) // Your specific values
         .range([
           "#002377",
-          "red",
+          "red", //small edit
           "red",
           "red",
           "#C0C0C0",
