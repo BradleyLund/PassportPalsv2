@@ -3,26 +3,57 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Passport Pals — Combined Visa Requirement Map</title>
-    <!-- Include D3.js library -->
+    <title>Passport Pals — where can we all go together?</title>
+    <meta name="description" content="Pick your group's passports and see which countries you can all visit, coloured by the toughest visa requirement anyone would face.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Public+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
     <script src="https://d3js.org/d3.v6.min.js"></script>
-
-    <!-- Cheeky was here -->
-
 </head>
 <body>
-    <h1>Passport Pals — Combined Visa Requirement Map</h1>
-    <div id="map"></div>
+    <div class="page">
+        <header class="site-header">
+            <p class="eyebrow">Passport Pals</p>
+            <h1>Where can we all go together?</h1>
+            <p class="lede">
+                Pick everyone's passports below. Each country is coloured by the
+                toughest visa requirement anyone in your group would face —
+                blue means you can all just go, red means someone needs a visa.
+            </p>
+            <p class="mrz" id="mrz" aria-hidden="true">P&lt;PASSPORTPALS&lt;&lt;WHERE&lt;CAN&lt;WE&lt;ALL&lt;GO&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;</p>
+        </header>
 
-    <footer>
-        <p>
-            Visa requirement data from
-            <a href="https://github.com/imorte/passport-index-data">imorte/passport-index-data</a>
-            (a maintained fork of
-            <a href="https://github.com/ilyankou/passport-index-dataset">ilyankou/passport-index-dataset</a>).
-            Data last updated: <span id="last-updated">unknown</span>.
-        </p>
-    </footer>
+        <section class="controls" aria-label="Passports in your group">
+            <span class="controls-label">Passports in your group</span>
+            <div class="passport-row" id="passport-row">
+                <!-- passport selects are rendered here by script.js -->
+                <button class="add-passport" id="add-passport" type="button">+ Add a passport</button>
+            </div>
+        </section>
+
+        <figure class="map-card">
+            <div id="map" role="img" aria-label="World map of combined visa requirements for the selected passports"></div>
+            <figcaption class="legend" id="legend"></figcaption>
+        </figure>
+
+        <div class="tooltip" id="tooltip" hidden></div>
+
+        <footer class="site-footer">
+            <p>
+                Visa requirement data from
+                <a href="https://github.com/imorte/passport-index-data">imorte/passport-index-data</a>
+                (a maintained fork of
+                <a href="https://github.com/ilyankou/passport-index-dataset">ilyankou/passport-index-dataset</a>,
+                both sourced from <a href="https://www.passportindex.org/">Passport Index</a>).
+                Data last updated: <span id="last-updated">unknown</span>.
+            </p>
+            <p>
+                Always double-check entry requirements with official sources before booking —
+                this map is a planning aid, not travel advice.
+            </p>
+        </footer>
+    </div>
 
     <script src="script.js"></script>
 </body>

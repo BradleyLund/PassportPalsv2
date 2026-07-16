@@ -1,280 +1,228 @@
-// script.js
-// Wait for the DOM to be ready
+// Passport Pals — combined visa-requirement map.
+// Colours each destination by the toughest requirement anyone in the
+// selected group of passports would face.
 
-// script.js
+// Requirement categories, worst → best. Day-limited visa-free stays (e.g.
+// "90") sit between "visa on arrival" and "visa free" and share one colour;
+// the exact day count is shown in the tooltip. "-1" means the passport's own
+// country, which is never the binding constraint when combining.
+const REQUIREMENTS = [
+  { value: "no admission", label: "No admission", color: "#8c2323" },
+  { value: "visa required", label: "Visa required", color: "#d03b3b" },
+  { value: "e-visa", label: "E-visa", color: "#e98d8b" },
+  { value: "eta", label: "eTA", color: "#86b6ef" },
+  { value: "visa on arrival", label: "Visa on arrival", color: "#5598e7" },
+  { value: "day-limited", label: "Visa free (limited stay)", color: "#256abf" },
+  { value: "visa free", label: "Visa free", color: "#0d366b" },
+];
+const NO_DATA_COLOR = "#eceae4";
+const DEFAULT_PASSPORTS = ["USA", "ZAF"];
+const MRZ_LENGTH = 64;
 
-// Function to parse CSV data into arrays and objects
-function parseCSVData(csvData) {
-  // Handle both LF and CRLF line endings, and ignore a trailing newline
-  const lines = csvData.trim().split(/\r?\n/);
-  const headers = lines[0].split(",");
-  const data = [];
+const baseRank = new Map(REQUIREMENTS.map((r, i) => [r.value, i * 1000]));
+const colorByValue = new Map(REQUIREMENTS.map((r) => [r.value, r.color]));
 
-  console.log(headers)
-
-  for (let i = 1; i < lines.length; i++) {
-    const currentLine = lines[i].split(",");
-    const entry = {};
-
-    for (let j = 0; j < headers.length; j++) {
-      entry[headers[j]] = currentLine[j];
-    }
-
-    data.push(entry);
-  }
-
-  return data;
+function isDayLimited(requirement) {
+  return /^\d+$/.test(requirement);
 }
 
-var visaData = [];
+// Lower rank = tougher requirement. Day counts order themselves within the
+// day-limited band (a 7-day stay is tougher than a 360-day one).
+function rankOf(requirement) {
+  if (requirement === undefined) return Infinity;
+  if (requirement === "-1") return Infinity; // home country never binds
+  if (isDayLimited(requirement)) {
+    return baseRank.get("day-limited") + Number(requirement);
+  }
+  const rank = baseRank.get(requirement);
+  return rank === undefined ? Infinity : rank;
+}
 
-// Fetch the CSV file and process it
-fetch("passport-index-tidy-iso3.csv")
-  .then((response) => response.text())
-  .then((csvData) => {
-    // console.log(csvData)
-    visaData = parseCSVData(csvData);
-    // console.log(visaData); // You can use the parsed data as needed here
-  })
-  .catch((error) => console.error("Error fetching CSV data:", error));
+function colorOf(requirement) {
+  if (requirement === undefined || requirement === Infinity) return NO_DATA_COLOR;
+  if (requirement === "-1") return colorByValue.get("visa free");
+  if (isDayLimited(requirement)) return colorByValue.get("day-limited");
+  return colorByValue.get(requirement) || NO_DATA_COLOR;
+}
 
-// Show when the visa data was last refreshed (written by the update workflow)
-fetch("data-meta.json")
-  .then((response) => response.json())
-  .then((meta) => {
-    document.getElementById("last-updated").textContent = meta.lastUpdated;
-  })
-  .catch((error) => console.error("Error fetching data metadata:", error));
+function labelOf(requirement) {
+  if (requirement === undefined) return "No data";
+  if (requirement === "-1") return "Home country";
+  if (isDayLimited(requirement)) return `Visa free · ${requirement}-day stay`;
+  const match = REQUIREMENTS.find((r) => r.value === requirement);
+  return match ? match.label : requirement;
+}
 
-document.addEventListener("DOMContentLoaded", function () {
-  // Width and height of the map container
-  var width = 800;
-  var height = 500;
-
-  // Create the SVG element to hold the map
-  var svg = d3
-    .select("#map")
-    .append("svg")
-    .attr("width", width)
-    .attr("height", height);
-
-  // Define the projection to convert latitude and longitude to screen coordinates
-  var projection = d3
-    .geoMercator()
-    .scale(130)
-    .translate([width / 2, height / 1.5]);
-
-  // Create a path generator using the projection
-  var path = d3.geoPath().projection(projection);
-
-  // Load the world map GeoJSON data
-  d3.json("./countries-land-10km.geo.json")
-    .then(function (data) {
-      console.log(visaData,'61'); // You can use the parsed data as needed here
-
-      //   we have the visa data in the array above, now we need to pick two countries
-
-      const countryOne = [];
-      const countryTwo = [];
-
-      //actually first we just need to show south africa's and then we can go from here
-
-      //work out what the possible values are and then come up with a scale of colors for them
-
-      //   maybe we convert the csv into one object with each country as a key to an array
-      console.log(visaData[0],'73');
-
-      var countriesObject = {};
-
-      var countryCodes = [];
-
-      var visaRequirementPossibilities = [];
-
-      for (let i = 0; i < visaData.length; i++) {
-        // create an array of the country codes
-        if (countryCodes.includes(visaData[i].Passport) != true) {
-          countryCodes.push(visaData[i].Passport);
-          //   console.log(visaData[i].Passport);
-          countriesObject[visaData[i].Passport] = {};
-          //   console.log(countriesObject);
-        }
-
-        if (
-          visaRequirementPossibilities.includes(visaData[i].Requirement) != true
-        ) {
-          visaRequirementPossibilities.push(visaData[i].Requirement);
-        }
-
-        countriesObject[visaData[i].Passport][visaData[i].Destination] =
-          visaData[i].Requirement;
-
-        // console.log(visaData[i].Destination);
-
-        // console.log(countriesObject);
-      }
-      // console.log(countryCodes);
-
-      // I could literally save this in a new json file and just import it going forwards
-      console.log(countriesObject,'106');
-
-      visaRequirementPossibilities.sort();
-      console.log(visaRequirementPossibilities,'109');
-
-      let sortedVisaRequirements = [
-        "-1",
-        null,
-        "no admission",
-        "covid ban",
-        "visa required",
-        "e-visa",
-        "eta",
-        "visa on arrival",
-        "7",
-        "10",
-        "14",
-        "15",
-        "21",
-        "28",
-        "30",
-        "31",
-        "42",
-        "45",
-        "60",
-        "90",
-        "120",
-        "180",
-        "240",
-        "360",
-        "visa free",
-      ];
-
-      //all i want to do now and here is combine usa with zaf to have the overlapping worst
-      // requirement
-      let combinedVisaReqs = {};
-
-      //get the countries that we want to compare from the select boxes like usa and south africa
-      //get whichever countriesobject is the longest and then use that one to loop through below. 
-
-
-      function getCombinedVisaReqs(...objects) {
-        let result = {};
-    
-        objects.forEach(obj => {
-            for (let key in obj) {
-                if (obj.hasOwnProperty(key)) {
-                    if (!result[key] || sortedVisaRequirements.indexOf(obj[key]) < sortedVisaRequirements.indexOf(result[key])) {
-                        result[key] = obj[key];
-                    }
-                }
-            }
-        });
-    
-        return result;
-      }
-    
-      combinedVisaReqs =getCombinedVisaReqs(countriesObject.USA, countriesObject.ZAF)
-
-
-
-      for (let i=0;i< data.features.length;i++)
-      {
-        // console.log(data.features[i].properties.value) //.value = indexof the visa requirement
-        // console.log(data.features[i].properties.A3,combinedVisaReqs[data.features[i].properties.A3])
-        console.log(data.features[i].properties.A3);
-        console.log(combinedVisaReqs[data.features[i].properties.A3])
-        // data.features[i].properties.value = sortedVisaRequirements.indexOf(combinedVisaReqs[data.features[i].properties.A3])
-        data.features[i].properties.value = combinedVisaReqs[data.features[i].properties.A3]
-
-      }
-
-      //I need to take the combinedVisaReqs give them a number value for each country. 
-      //assign the value to the properties of each of the geo.json countries and then draw.
-
-      // Use D3's built-in color scale
-      // var colorScale = d3
-      //   .scaleSequential()
-      //   .interpolator(d3.interpolateOranges) // You can use other interpolators as well
-      //   .domain([
-      //     0,
-      //     d3.max(data.features, function (d) {
-      //       return d.properties.value;
-      //     }),
-      //   ]);
-
-        // Define your custom color scale
-      var colorScale = d3.scaleOrdinal()
-        .domain([
-          "-1",
-          null,
-          "no admission",
-          "covid ban",
-          "visa required",
-          "e-visa",
-          "eta",
-          "visa on arrival",
-          "7",
-          "10",
-          "14",
-          "15",
-          "21",
-          "28",
-          "30",
-          "31",
-          "42",
-          "45",
-          "60",
-          "90",
-          "120",
-          "180",
-          "240",
-          "360",
-          "visa free",
-          undefined
-        ]) // Your specific values
-        .range([
-          "#002377",
-          "red", //small edit
-          "red",
-          "red",
-          "#C0C0C0",
-          "#61C7A1",
-          "#8ED973",
-          "#B5E61D",
-          "#BAFFAA",
-          "#BAFFAA",
-          "#BAFFAA",
-          "#BAFFAA",
-          "#BAFFAA",
-          "#BAFFAA",
-          "#9EFF9E",
-          "#9EFF9E",
-          "#9EFF9E",
-          "#9EFF9E",
-          "#9EFF9E",
-          "#9EFF9E",
-          "#9EFF9E",
-          "#9EFF9E",
-          "#9EFF9E",
-          "#9EFF9E",
-          "#22B14C",
-          "red"
-        ]);
-
-      // Draw the map
-      svg
-        .selectAll("path")
-        .data(data.features)
-        .enter()
-        .append("path")
-        .attr("d", path)
-        .style("fill", function (d) {
-          console.log(d.properties.value, d.properties);
-          return colorScale(d.properties.value);
-        })
-        .style("stroke", "#fff")
-        .style("stroke-width", "0.5px");
-    })
-    .catch(function (error) {
-      console.error("Error loading the GeoJSON data:", error);
-    });
+Promise.all([
+  d3.csv("passport-index-tidy-iso3.csv"),
+  d3.json("countries-land-10km.geo.json"),
+  d3.json("country-names.json"),
+  d3.json("data-meta.json").catch(() => null),
+]).then(([visaRows, geo, countryNames, meta]) => {
+  init(visaRows, geo, countryNames, meta);
+}).catch((error) => {
+  console.error("Error loading map data:", error);
+  document.getElementById("map").textContent =
+    "The map data failed to load. Try refreshing the page.";
 });
+
+function init(visaRows, geo, countryNames, meta) {
+  // ---- data shaping ----
+  const visaByPassport = {};
+  for (const row of visaRows) {
+    (visaByPassport[row.Passport] ??= {})[row.Destination] = row.Requirement;
+  }
+
+  const nameOf = (code) => countryNames[code] || code;
+  const passportCodes = Object.keys(visaByPassport)
+    .sort((a, b) => nameOf(a).localeCompare(nameOf(b)));
+
+  // Antarctica has no visa regime and dominates the projection; drop it.
+  const features = geo.features.filter((f) => f.properties.A3 !== "ATA");
+
+  // ---- state (shareable via ?p=USA,ZAF) ----
+  const params = new URLSearchParams(location.search);
+  let selected = (params.get("p") || "").split(",")
+    .filter((code) => visaByPassport[code]);
+  if (selected.length === 0) selected = [...DEFAULT_PASSPORTS];
+
+  // ---- map skeleton ----
+  const width = 960;
+  const height = 500;
+  const projection = d3.geoNaturalEarth1().fitSize([width, height], {
+    type: "FeatureCollection",
+    features,
+  });
+  const path = d3.geoPath(projection);
+
+  const svg = d3.select("#map")
+    .append("svg")
+    .attr("viewBox", `0 0 ${width} ${height}`);
+
+  const tooltip = document.getElementById("tooltip");
+
+  const countries = svg.selectAll("path")
+    .data(features)
+    .enter()
+    .append("path")
+    .attr("class", "country")
+    .attr("d", path)
+    .style("stroke", "#ffffff")
+    .style("stroke-width", "0.5")
+    .on("mousemove", (event, d) => showTooltip(event, d))
+    .on("mouseleave", () => { tooltip.hidden = true; });
+
+  // ---- passport selectors ----
+  const row = document.getElementById("passport-row");
+  const addButton = document.getElementById("add-passport");
+  addButton.addEventListener("click", () => {
+    selected.push(pickNextPassport());
+    renderSelectors();
+    update();
+  });
+
+  function pickNextPassport() {
+    return passportCodes.find((code) => !selected.includes(code)) || selected[0];
+  }
+
+  function renderSelectors() {
+    row.querySelectorAll(".passport").forEach((el) => el.remove());
+    selected.forEach((code, index) => {
+      const wrap = document.createElement("span");
+      wrap.className = "passport";
+
+      const select = document.createElement("select");
+      select.setAttribute("aria-label", `Passport ${index + 1}`);
+      for (const option of passportCodes) {
+        select.add(new Option(nameOf(option), option, false, option === code));
+      }
+      select.addEventListener("change", () => {
+        selected[index] = select.value;
+        update();
+      });
+      wrap.append(select);
+
+      if (selected.length > 1) {
+        const remove = document.createElement("button");
+        remove.type = "button";
+        remove.className = "remove";
+        remove.textContent = "×";
+        remove.setAttribute("aria-label", `Remove ${nameOf(code)} passport`);
+        remove.addEventListener("click", () => {
+          selected.splice(index, 1);
+          renderSelectors();
+          update();
+        });
+        wrap.append(remove);
+      }
+
+      row.insertBefore(wrap, addButton);
+    });
+  }
+
+  // ---- combined map + chrome updates ----
+  function combinedRequirement(destination) {
+    let worst;
+    for (const code of selected) {
+      const requirement = visaByPassport[code][destination];
+      if (worst === undefined || rankOf(requirement) < rankOf(worst)) {
+        worst = requirement;
+      }
+    }
+    return worst;
+  }
+
+  function update() {
+    countries
+      .transition()
+      .duration(300)
+      .style("fill", (d) => colorOf(combinedRequirement(d.properties.A3)));
+
+    const mrz = `P<${selected.join("<")}<<WHERE<CAN<WE<ALL<GO`;
+    document.getElementById("mrz").textContent =
+      mrz.padEnd(MRZ_LENGTH, "<").slice(0, MRZ_LENGTH);
+
+    history.replaceState(null, "", `?p=${selected.join(",")}`);
+  }
+
+  function showTooltip(event, d) {
+    const destination = d.properties.A3;
+    const rows = selected.map((code) =>
+      `<tr><td>${nameOf(code)}</td><td>${labelOf(visaByPassport[code][destination])}</td></tr>`
+    ).join("");
+    const combined = combinedRequirement(destination);
+    const verdict = selected.length > 1
+      ? `<p class="verdict">Together: ${labelOf(combined)}</p>`
+      : "";
+
+    tooltip.innerHTML =
+      `<h3>${nameOf(destination)}</h3><table>${rows}</table>${verdict}`;
+    tooltip.hidden = false;
+
+    const pad = 14;
+    const box = tooltip.getBoundingClientRect();
+    let x = event.clientX + pad;
+    let y = event.clientY + pad;
+    if (x + box.width > window.innerWidth - pad) x = event.clientX - box.width - pad;
+    if (y + box.height > window.innerHeight - pad) y = event.clientY - box.height - pad;
+    tooltip.style.left = `${x}px`;
+    tooltip.style.top = `${y}px`;
+  }
+
+  // ---- legend ----
+  const legend = document.getElementById("legend");
+  for (const { label, color } of REQUIREMENTS) {
+    legend.insertAdjacentHTML("beforeend",
+      `<span class="legend-item"><span class="legend-swatch" style="background:${color}"></span>${label}</span>`);
+  }
+  legend.insertAdjacentHTML("beforeend",
+    `<span class="legend-item"><span class="legend-swatch no-data" style="background:${NO_DATA_COLOR}"></span>No data</span>`);
+
+  // ---- footer ----
+  if (meta && meta.lastUpdated) {
+    document.getElementById("last-updated").textContent = meta.lastUpdated;
+  }
+
+  renderSelectors();
+  update();
+}
