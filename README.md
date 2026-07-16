@@ -1,9 +1,18 @@
 # PassportPalsv2
 
-A D3.js choropleth world map that combines the visa requirements of two
-passports (currently USA + South Africa) and colours each destination by the
-*worst* of the two requirements — i.e. where could you both travel together
-most easily.
+Where can we all go together? A D3.js choropleth world map for groups of
+friends with different passports: pick everyone's passports and each country
+is coloured by the *toughest* visa requirement anyone in the group would face
+— blue means you can all just go, red means someone needs a visa.
+
+Features:
+
+- Passport dropdowns with a **+ Add a passport** button for any group size,
+  and hover tooltips showing each passport's requirement per country
+- Shareable URLs — the selection is kept in the query string
+  (e.g. `?p=USA,ZAF`)
+- A passport's own country never decides the colour; the rest of the group's
+  requirements do
 
 ## Running locally
 
@@ -34,4 +43,6 @@ also be triggered manually from the repo's Actions tab ("Update visa data" →
 "Run workflow").
 
 Country boundaries come from `countries-land-10km.geo.json`
-([simonepri/geo-maps](https://github.com/simonepri/geo-maps)).
+([simonepri/geo-maps](https://github.com/simonepri/geo-maps)), and country
+display names in `country-names.json` from
+[mledoze/countries](https://github.com/mledoze/countries).
