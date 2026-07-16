@@ -5,7 +5,8 @@
 
 // Function to parse CSV data into arrays and objects
 function parseCSVData(csvData) {
-  const lines = csvData.split("\r\n");
+  // Handle both LF and CRLF line endings, and ignore a trailing newline
+  const lines = csvData.trim().split(/\r?\n/);
   const headers = lines[0].split(",");
   const data = [];
 
@@ -118,6 +119,7 @@ document.addEventListener("DOMContentLoaded", function () {
         "covid ban",
         "visa required",
         "e-visa",
+        "eta",
         "visa on arrival",
         "7",
         "10",
@@ -200,6 +202,7 @@ document.addEventListener("DOMContentLoaded", function () {
           "covid ban",
           "visa required",
           "e-visa",
+          "eta",
           "visa on arrival",
           "7",
           "10",
@@ -227,6 +230,7 @@ document.addEventListener("DOMContentLoaded", function () {
           "red",
           "#C0C0C0",
           "#61C7A1",
+          "#8ED973",
           "#B5E61D",
           "#BAFFAA",
           "#BAFFAA",
