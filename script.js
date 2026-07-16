@@ -38,6 +38,14 @@ fetch("passport-index-tidy-iso3.csv")
   })
   .catch((error) => console.error("Error fetching CSV data:", error));
 
+// Show when the visa data was last refreshed (written by the update workflow)
+fetch("data-meta.json")
+  .then((response) => response.json())
+  .then((meta) => {
+    document.getElementById("last-updated").textContent = meta.lastUpdated;
+  })
+  .catch((error) => console.error("Error fetching data metadata:", error));
+
 document.addEventListener("DOMContentLoaded", function () {
   // Width and height of the map container
   var width = 800;

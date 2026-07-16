@@ -1,18 +1,29 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Choropleth World Map</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Passport Pals — Combined Visa Requirement Map</title>
     <!-- Include D3.js library -->
     <script src="https://d3js.org/d3.v6.min.js"></script>
 
     <!-- Cheeky was here -->
-    
+
 </head>
 <body>
-    <h1>Choropleth World Map Example</h1>
+    <h1>Passport Pals — Combined Visa Requirement Map</h1>
     <div id="map"></div>
+
+    <footer>
+        <p>
+            Visa requirement data from
+            <a href="https://github.com/imorte/passport-index-data">imorte/passport-index-data</a>
+            (a maintained fork of
+            <a href="https://github.com/ilyankou/passport-index-dataset">ilyankou/passport-index-dataset</a>).
+            Data last updated: <span id="last-updated">unknown</span>.
+        </p>
+    </footer>
 
     <script src="script.js"></script>
 </body>
 </html>
-    
